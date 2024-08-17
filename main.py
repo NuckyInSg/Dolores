@@ -37,26 +37,41 @@ class InterviewDialog:
         )
         self.display_interviewer_message(response)
         self.update_stats(len("Start the interview with the introduction and small talk stage."), len(response))
-        self.chat_history.append({"role": "ai", "content": response})  # Add this line
+        self.chat_history.append({"role": "ai", "content": response})
 
         # Main interview loop
-        while True:
+        stages = ["introduction", "overview", "technical", "project", "company", "candidate", "closing"]
+        current_stage_index = 0
+
+        while current_stage_index < len(stages):
             answer = self.console.input("[bold cyan]Candidate: [/bold cyan]")
             print("\n")
             
             if answer.startswith('/'):
+                if answer == "/exit":
+                    self.exit_interview()
                 self.handle_command(answer)
                 continue
 
-            self.chat_history.append({"role": "human", "content": answer})  # Add this line
+            self.chat_history.append({"role": "human", "content": answer})
 
+            current_stage = stages[current_stage_index]
             response = self.agent.interview_chain.invoke(
-                {"input": f"The candidate's response: {answer}\nContinue the interview based on the current stage and the candidate's response."},
+                {"input": f"The candidate's response: {answer}\nContinue the interview based on the current stage ({current_stage}) and the candidate's response."},
                 config={"configurable": {"session_id": self.session_id}}
             )
+            
+            extracted_stage = SoftwareInterviewAgent.extract_interview_stage(response)
+            if extracted_stage != current_stage:
+                current_stage_index += 1
+
             self.display_interviewer_message(response)
             self.update_stats(len(answer), len(response))
-            self.chat_history.append({"role": "ai", "content": response})  # Add this line
+            self.chat_history.append({"role": "ai", "content": response})
+
+            if current_stage == "closing":
+                self.save_interview()
+                break
 
         # Closing remarks
         response = self.agent.interview_chain.invoke(
@@ -77,9 +92,12 @@ class InterviewDialog:
 
     def display_interviewer_message(self, message):
         extracted_message = self.agent.extract_interviewer_content(message)
+        stage = SoftwareInterviewAgent.extract_interview_stage(message)
+        
+        # Default color if stage is not recognized        
         panel = Panel(
-            Text(extracted_message, style="cyan"),
-            title="Claude's Response",
+            Text(extracted_message),
+            title=f"Claude's Response ({stage.capitalize()})",
             subtitle="▼",
             title_align="left",
             border_style="bright_blue",

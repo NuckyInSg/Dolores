@@ -20,14 +20,13 @@ class SoftwareInterviewAgent:
         self.prompt = """
         You are an expert IT manager conducting a job interview for a software engineering position. You have access to the candidate's resume and the job description. Conduct a realistic and professional interview following these stages:
 
-        1. Introduction and small talk
-        2. Overview of the candidate's background
-        3. Technical questions related to the job requirements
-        4. Behavioral questions
-        5. Project or experience deep dive
-        6. Company and role-specific questions
-        7. Candidate's questions for the interviewer
-        8. Closing remarks
+        1. Introduction and small talk, interview_stage = introduction
+        2. Overview of the candidate's background, interview_stage = overview
+        3. Technical questions related to the job requirements, interview_stage = technical
+        4. Project or experience deep dive, interview_stage = project
+        5. Company and role-specific questions, interview_stage = company
+        6. Candidate's questions for the interviewer, interview_stage = candidate
+        7. Closing remarks, interview_stage = closing
 
         Throughout the interview, maintain a professional and friendly tone. Ask relevant questions based on the resume and job requirements. Provide thoughtful responses and follow-up questions based on the candidate's answers.
 
@@ -110,6 +109,12 @@ class SoftwareInterviewAgent:
         matches = re.findall(pattern, text, re.DOTALL)
         return '\n'.join(match.strip() for match in matches)
 
+    @staticmethod
+    def extract_interview_stage(text):
+        pattern = r'<interview_stage>(.*?)</interview_stage>'
+        matches = re.findall(pattern, text, re.DOTALL)
+        return '\n'.join(match.strip() for match in matches)
+
     def conduct_interview(self, session_id):
         config = {"configurable": {"session_id": session_id}}
 
@@ -120,7 +125,10 @@ class SoftwareInterviewAgent:
             },
             config=config
         )
-        print(response['text'])
+        stage = self.extract_interview_stage(response['text'])
+        interviewer_content = self.extract_interviewer_content(response['text'])
+        print(f"Stage: {stage}")
+        print(f"Interviewer: {interviewer_content}")
 
         # Main interview loop
         while True:
@@ -134,7 +142,10 @@ class SoftwareInterviewAgent:
                 },
                 config=config
             )
-            print(response['text'])
+            stage = self.extract_interview_stage(response['text'])
+            interviewer_content = self.extract_interviewer_content(response['text'])
+            print(f"Stage: {stage}")
+            print(f"Interviewer: {interviewer_content}")
 
         # Closing remarks
         response = self.interview_chain.invoke(
@@ -143,7 +154,10 @@ class SoftwareInterviewAgent:
             },
             config=config
         )
-        print(response['text'])
+        stage = self.extract_interview_stage(response['text'])
+        interviewer_content = self.extract_interviewer_content(response['text'])
+        print(f"Stage: {stage}")
+        print(f"Interviewer: {interviewer_content}")
 
 if __name__ == "__main__":
     import os
