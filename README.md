@@ -1,20 +1,20 @@
-# Software Interview Agent
+# 🤖Software Interview Agent
 
 This project implements an AI-powered Software Interview Agent using the Anthropic Claude API and LangChain framework. The agent conducts realistic job interviews for software engineering positions, adapting its questions based on the candidate's resume and job description.
 
-## Features
+## 🚀 Features
 
-- Conducts multi-stage interviews following a professional structure
-- Analyzes candidate resumes and job descriptions to tailor questions
-- Maintains conversation history for coherent interactions
-- Supports PDF resumes and text-based job descriptions
+- 🎭 Realistic interview simulation
+- 📊 Adaptive questioning based on resume and job description
+- 💬 Natural language processing for candidate responses
+- 📝 Detailed feedback and evaluation
 
 ## Prerequisites
 
 - Python 3.7+
 - Anthropic API key
 
-## Installation
+## 🛠️ Installation
 
 1. Clone the repository:
    ```
@@ -32,7 +32,7 @@ This project implements an AI-powered Software Interview Agent using the Anthrop
    export ANTHROPIC_API_KEY=your_api_key_here
    ```
 
-## Usage
+## 🏃‍♂️ Usage
 
 1. Prepare your resume (PDF format) and job description (text format) files.
 
@@ -44,10 +44,6 @@ This project implements an AI-powered Software Interview Agent using the Anthrop
    ```
 
 4. Interact with the agent by responding to its questions. Type 'end interview' to conclude the session.
-
-## Customization
-
-You can modify the interview stages, prompts, and other parameters by editing the `SoftwareInterviewAgent` class in `agent.py`.
 
 ## License
 
