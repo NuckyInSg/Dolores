@@ -1,7 +1,8 @@
 import os
 from langchain_anthropic import ChatAnthropic
-from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate, SystemMessagePromptTemplate
-from langchain.chains import LLMChain
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain_text_splitters import CharacterTextSplitter
 from langchain_core.runnables.history import RunnableWithMessageHistory
@@ -83,11 +84,11 @@ class SoftwareInterviewAgent:
         human_template = "{input}"
 
         chat_prompt = ChatPromptTemplate.from_messages([
-            SystemMessagePromptTemplate.from_template(system_template),
-            HumanMessagePromptTemplate.from_template(human_template)
+            ("system", system_template),
+            ("human", human_template)
         ])
 
-        chain = LLMChain(llm=self.llm, prompt=chat_prompt)
+        chain = chat_prompt | self.llm | StrOutputParser()
 
         store = {}
 
