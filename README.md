@@ -41,8 +41,8 @@ To use the InterviewDialog class for conducting a software engineering interview
    - `ANTHROPIC_API_URL`: The Anthropic API URL (if different from the default)
 
 2. Prepare your resume and job description files:
-   - Place your resume in PDF format at `./docs/local/my_resume.pdf`
-   - Place the job description in text format at `./docs/local/meta_jd.txt`
+   - Place your resume in PDF format at `./docs/local/resume.pdf`
+   - Place the job description in text format at `./docs/local/job_description.txt`
 
 3. Run the interview dialog:
 
