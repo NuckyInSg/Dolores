@@ -7,15 +7,16 @@ from rich.table import Table
 from rich import box
 
 class InterviewDialog:
-    def __init__(self):
-        api_key = os.getenv("ANTHROPIC_API_KEY")
-        api_url = os.getenv("ANTHROPIC_API_URL")
-        if api_url is None:
-            api_url = "https://api.anthropic.com"
-        resume_path = "./docs/local/my_resume.pdf"
-        job_description_path = "./docs/local/meta_jd.txt"
-        model = "claude-3-5-sonnet"
-        self.agent = SoftwareInterviewAgent(api_key, resume_path, job_description_path, model=model, api_url=api_url)
+    def __init__(self, api_key, resume_path,
+                 job_description_path, model, api_url=None):
+        self.api_key = api_key
+        self.api_url = api_url or os.getenv("ANTHROPIC_API_URL") or "https://api.anthropic.com"
+        self.resume_path = resume_path
+        self.job_description_path = job_description_path
+        self.model = model
+
+        self.agent = SoftwareInterviewAgent(self.api_key, self.resume_path, self.job_description_path, 
+                                            model=self.model, api_url=self.api_url)
         self.console = Console() 
         self.session_id = "interview_session_1"
         self.stats = {"input": 0, "output": 0, "total": 0}
@@ -144,5 +145,14 @@ class InterviewDialog:
         exit()
 
 if __name__ == "__main__":
-    dialog = InterviewDialog()
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    api_url = os.getenv("ANTHROPIC_API_URL")
+    resume_path = "./docs/local/resume.pdf"
+    job_description_path = "./docs/local/job_description.txt"
+    model = "claude-3-5-sonnet"
+    dialog = InterviewDialog(api_key=api_key, 
+                             api_url=api_url, 
+                             resume_path=resume_path, 
+                             job_description_path=job_description_path, 
+                             model=model)
     dialog.run_interview()
