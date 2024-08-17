@@ -18,8 +18,8 @@ This project implements an AI-powered Software Interview Agent using the Anthrop
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/software-interview-agent.git
-   cd software-interview-agent
+   git clone https://github.com/NuckyInSg/interview-agent.git
+   cd interview-agent
    ```
 
 2. Install the required dependencies:
