@@ -6,6 +6,7 @@ from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain_text_splitters import CharacterTextSplitter
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory, InMemoryChatMessageHistory
+import re
 
 class SoftwareInterviewAgent:
     def __init__(self, api_key, resume_path, job_description_path, model="claude-3-sonnet-20240229", api_url="https://api.anthropic.com"):
@@ -101,6 +102,12 @@ class SoftwareInterviewAgent:
             input_messages_key="input",
             history_messages_key="history",
         )
+
+    @staticmethod
+    def extract_interviewer_content(text):
+        pattern = r'<interviewer>(.*?)</interviewer>'
+        matches = re.findall(pattern, text, re.DOTALL)
+        return '\n'.join(match.strip() for match in matches)
 
     def conduct_interview(self, session_id):
         config = {"configurable": {"session_id": session_id}}
