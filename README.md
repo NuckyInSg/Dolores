@@ -27,11 +27,6 @@ This project implements an AI-powered Software Interview Agent using the Anthrop
    pip install -r requirements.txt
    ```
 
-3. Set up your Anthropic API key as an environment variable:
-   ```
-   export ANTHROPIC_API_KEY=your_api_key_here
-   ```
-
 ## Usage
 
 To use the InterviewDialog class for conducting a software engineering interview:
@@ -47,10 +42,7 @@ To use the InterviewDialog class for conducting a software engineering interview
 3. Run the interview dialog:
 
 ```python
-from dialog import InterviewDialog
-
-interview = InterviewDialog()
-interview.run_interview()
+python main.py
 ```
 
 4. Interact with the interviewer by responding to questions when prompted.
