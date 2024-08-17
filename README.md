@@ -32,18 +32,37 @@ This project implements an AI-powered Software Interview Agent using the Anthrop
    export ANTHROPIC_API_KEY=your_api_key_here
    ```
 
-## 🏃‍♂️ Usage
+## Usage
 
-1. Prepare your resume (PDF format) and job description (text format) files.
+To use the InterviewDialog class for conducting a software engineering interview:
 
-2. Update the `resume_path` and `job_description_path` variables in the `__main__` section of `agent.py`.
+1. Ensure you have set up the necessary environment variables:
+   - `ANTHROPIC_API_KEY`: Your Anthropic API key
+   - `ANTHROPIC_API_URL`: The Anthropic API URL (if different from the default)
 
-3. Run the interview:
-   ```
-   python agent.py
-   ```
+2. Prepare your resume and job description files:
+   - Place your resume in PDF format at `./docs/local/my_resume.pdf`
+   - Place the job description in text format at `./docs/local/meta_jd.txt`
 
-4. Interact with the agent by responding to its questions. Type 'end interview' to conclude the session.
+3. Run the interview dialog:
+
+```python
+from dialog import InterviewDialog
+
+interview = InterviewDialog()
+interview.run_interview()
+```
+
+4. Interact with the interviewer by responding to questions when prompted.
+
+5. Use the following commands during the interview:
+   - `/info`: Display current interview statistics
+   - `/save`: Save the interview transcript and statistics
+   - `/exit`: End the interview session
+
+![Interview Dialog Screenshot](assets/image/dialog_screenshot.jpg)
+
+The interview dialog provides a rich, interactive experience with color-coded messages and formatted output for easy readability.
 
 ## License
 
