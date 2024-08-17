@@ -10,6 +10,8 @@ class InterviewDialog:
     def __init__(self):
         api_key = os.getenv("ANTHROPIC_API_KEY")
         api_url = os.getenv("ANTHROPIC_API_URL")
+        if api_url is None:
+            api_url = "https://api.anthropic.com"
         resume_path = "./docs/local/my_resume.pdf"
         job_description_path = "./docs/local/meta_jd.txt"
         model = "claude-3-5-sonnet"
