@@ -1,14 +1,12 @@
-import tiktoken
 from .base_agent import BaseAgent
 from langchain_core.language_models import BaseChatModel
-
 
 class SoftwareInterviewAgent(BaseAgent):
     def __init__(self, llm: BaseChatModel, resume_content: str, job_description_content: str):
         super().__init__(llm, resume_content, job_description_content)
 
-    def get_prompt(self):
-        prompt = f"""
+    def get_prompt(self) -> str:
+        return f"""
         You are an expert IT manager conducting a job interview for a software engineering position. You have access to the candidate's resume and the job description. Conduct a realistic and professional interview following these stages:
 
         1. Introduction and small talk, interview_stage = introduction
@@ -38,19 +36,12 @@ class SoftwareInterviewAgent(BaseAgent):
 
         Remember to adapt your questions and conversation based on the candidate's responses and ensure technical questions are appropriate for the position level.
         """
-        return prompt
 
-    def num_tokens_from_string(self, string: str) -> int:
-        """Returns the number of tokens in a text string."""
-        encoding = tiktoken.encoding_for_model(self.llm.model_name)
-        num_tokens = len(encoding.encode(string))
-        return num_tokens
+    async def start_interview(self, session_id: str) -> dict:
+        return await self.process_message(session_id, "Start the interview with the introduction and small talk stage.")
 
-    async def conduct_interview(self, session_id: str, user_input: str = None) -> dict:
-        if user_input is None:
-            # Start the interview
-            input_text = "Start the interview with the introduction and small talk stage."
-        else:
-            input_text = f"The candidate's response: {user_input}\nContinue the interview based on the current stage and the candidate's response."
+    async def process_candidate_message(self, session_id: str, message: str) -> dict:
+        return await self.process_message(session_id, f"The candidate's response: {message}\nContinue the interview based on the candidate's response.")
 
-        return await self._call_llm(session_id, input_text)
+    async def end_interview(self, session_id: str) -> dict:
+        return await self.process_message(session_id, "Provide closing remarks and explain the next steps in the hiring process.")

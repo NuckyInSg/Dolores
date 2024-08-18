@@ -2,9 +2,11 @@ from abc import ABC, abstractmethod
 from langchain_core.language_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory, InMemoryChatMessageHistory
 import re
+import tiktoken
 
 class BaseAgent(ABC):
     def __init__(self, llm: BaseChatModel, resume_content: str, job_description_content: str):
@@ -19,19 +21,7 @@ class BaseAgent(ABC):
         self.total_cost = 0
 
     @abstractmethod
-    def get_prompt(self):
-        pass
-
-    @abstractmethod
-    def start_interview(self):
-        pass
-
-    @abstractmethod
-    async def conduct_interview(self, session_id: str, user_input: str = None) -> dict:
-        pass
-
-    @abstractmethod
-    def num_tokens_from_string(self, string: str) -> int:
+    def get_prompt(self) -> str:
         pass
 
     def _create_interview_chain(self):
@@ -60,11 +50,10 @@ class BaseAgent(ABC):
             history_messages_key="history",
         )
 
-    def update_token_usage(self, prompt_tokens, completion_tokens):
+    def update_token_usage(self, prompt_tokens: int, completion_tokens: int):
         self.total_prompt_tokens += prompt_tokens
         self.total_completion_tokens += completion_tokens
-        # Calculate cost based on the model's pricing
-        # This is a placeholder calculation, adjust according to actual pricing
+        # Calculate cost based on the model's pricing (adjust as needed)
         self.total_cost += (prompt_tokens * 0.00001 + completion_tokens * 0.00003)
 
     def get_token_usage(self):
@@ -75,7 +64,23 @@ class BaseAgent(ABC):
             "total_cost": f"${self.total_cost:.4f}"
         }
 
-    async def _call_llm(self, session_id: str, input_text: str) -> dict:
+    @staticmethod
+    def extract_interviewer_content(text: str) -> str:
+        pattern = r'<interviewer>(.*?)</interviewer>'
+        matches = re.findall(pattern, text, re.DOTALL)
+        return '\n'.join(match.strip() for match in matches)
+
+    @staticmethod
+    def extract_interview_stage(text: str) -> str:
+        pattern = r'<interview_stage>(.*?)</interview_stage>'
+        matches = re.findall(pattern, text, re.DOTALL)
+        return '\n'.join(match.strip() for match in matches)
+
+    def num_tokens_from_string(self, string: str) -> int:
+        encoding = tiktoken.encoding_for_model(self.llm.model_name)
+        return len(encoding.encode(string))
+
+    async def process_message(self, session_id: str, input_text: str) -> dict:
         config = {"configurable": {"session_id": session_id}}
 
         response = await self.interview_chain.ainvoke(
@@ -86,7 +91,6 @@ class BaseAgent(ABC):
         stage = self.extract_interview_stage(response)
         interviewer_content = self.extract_interviewer_content(response)
 
-        # Update token usage
         prompt_tokens = self.num_tokens_from_string(input_text)
         completion_tokens = self.num_tokens_from_string(response)
         self.update_token_usage(prompt_tokens, completion_tokens)
