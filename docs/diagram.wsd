@@ -1,0 +1,53 @@
+@startuml
+actor Client
+participant API
+participant Service
+participant Agent
+participant LLM
+
+Client -> API: POST /v1/interviews (Create Session)
+API -> Service: create_session(resume, job_description, model)
+Service -> Agent: Create new agent
+Service --> API: Return session_id
+API --> Client: session_id
+
+Client -> API: POST /v1/interviews/{session_id}/start
+API -> Service: start_interview(session_id)
+Service -> Agent: Generate initial message
+Agent -> LLM: Generate response
+LLM --> Agent: Initial message
+Agent --> Service: Initial message and stage
+Service --> API: Initial message and stage
+API --> Client: Initial message and stage
+
+loop Interview Conversation
+    Client -> API: POST /v1/interviews/{session_id}/messages
+    API -> Service: process_candidate_message(session_id, message)
+    Service -> Agent: Process message
+    Agent -> LLM: Generate response
+    LLM --> Agent: Next question/response
+    Agent --> Service: Next question/response and stage
+    Service --> API: Next question/response and stage
+    API --> Client: Next question/response and stage
+end
+
+Client -> API: POST /v1/interviews/{session_id}/end
+API -> Service: end_interview(session_id)
+Service -> Agent: Generate closing remarks
+Agent -> LLM: Generate closing remarks
+LLM --> Agent: Closing remarks
+Agent --> Service: Closing remarks
+Service --> API: Summary, next steps, and statistics
+API --> Client: Summary, next steps, and statistics
+
+Client -> API: GET /v1/interviews/{session_id}/transcript
+API -> Service: get_transcript(session_id)
+Service --> API: Full interview transcript
+API --> Client: Full interview transcript
+
+Client -> API: GET /v1/interviews/{session_id}/statistics
+API -> Service: get_statistics(session_id)
+Service --> API: Interview statistics
+API --> Client: Interview statistics
+
+@enduml
