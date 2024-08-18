@@ -9,3 +9,4 @@
 .DS_Store
 docs/local/
 .env
+.pytest_cache/
