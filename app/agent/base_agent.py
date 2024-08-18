@@ -2,10 +2,8 @@ from abc import ABC, abstractmethod
 from langchain_core.language_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory, InMemoryChatMessageHistory
-import re
 import tiktoken
 
 class BaseAgent(ABC):
@@ -22,6 +20,10 @@ class BaseAgent(ABC):
 
     @abstractmethod
     def get_prompt(self) -> str:
+        pass
+
+    @abstractmethod
+    def parse_response(self, response: str) -> Dict[str, Any]:
         pass
 
     def _create_interview_chain(self):
@@ -64,18 +66,6 @@ class BaseAgent(ABC):
             "total_cost": f"${self.total_cost:.4f}"
         }
 
-    @staticmethod
-    def extract_interviewer_content(text: str) -> str:
-        pattern = r'<interviewer>(.*?)</interviewer>'
-        matches = re.findall(pattern, text, re.DOTALL)
-        return '\n'.join(match.strip() for match in matches)
-
-    @staticmethod
-    def extract_interview_stage(text: str) -> str:
-        pattern = r'<interview_stage>(.*?)</interview_stage>'
-        matches = re.findall(pattern, text, re.DOTALL)
-        return '\n'.join(match.strip() for match in matches)
-
     def num_tokens_from_string(self, string: str) -> int:
         encoding = tiktoken.encoding_for_model(self.llm.model_name)
         return len(encoding.encode(string))
@@ -88,15 +78,11 @@ class BaseAgent(ABC):
             config=config
         )
 
-        stage = self.extract_interview_stage(response)
-        interviewer_content = self.extract_interviewer_content(response)
+        parsed_response = self.parse_response(response)
 
         prompt_tokens = self.num_tokens_from_string(input_text)
         completion_tokens = self.num_tokens_from_string(response)
         self.update_token_usage(prompt_tokens, completion_tokens)
 
-        return {
-            "stage": stage,
-            "interviewer_content": interviewer_content,
-            "token_usage": self.get_token_usage()
-        }
+        parsed_response["token_usage"] = self.get_token_usage()
+        return parsed_response

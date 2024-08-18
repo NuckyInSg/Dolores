@@ -1,5 +1,7 @@
 from .base_agent import BaseAgent
 from langchain_core.language_models import BaseChatModel
+import re
+from typing import Dict, Any
 
 class SoftwareInterviewAgent(BaseAgent):
     def __init__(self, llm: BaseChatModel, resume_content: str, job_description_content: str):
@@ -36,6 +38,26 @@ class SoftwareInterviewAgent(BaseAgent):
 
         Remember to adapt your questions and conversation based on the candidate's responses and ensure technical questions are appropriate for the position level.
         """
+
+    def parse_response(self, response: str) -> Dict[str, Any]:
+        stage = self.extract_interview_stage(response)
+        interviewer_content = self.extract_interviewer_content(response)
+        return {
+            "stage": stage,
+            "interviewer_content": interviewer_content
+        }
+
+    @staticmethod
+    def extract_interviewer_content(text: str) -> str:
+        pattern = r'<interviewer>(.*?)</interviewer>'
+        matches = re.findall(pattern, text, re.DOTALL)
+        return '\n'.join(match.strip() for match in matches)
+
+    @staticmethod
+    def extract_interview_stage(text: str) -> str:
+        pattern = r'<interview_stage>(.*?)</interview_stage>'
+        matches = re.findall(pattern, text, re.DOTALL)
+        return '\n'.join(match.strip() for match in matches)
 
     async def start_interview(self, session_id: str) -> dict:
         return await self.process_message(session_id, "Start the interview with the introduction and small talk stage.")
