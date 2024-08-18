@@ -1,9 +1,11 @@
 from app.agent.software_agent import SoftwareInterviewAgent
 from app.tools.document_parser import parse_resume, parse_job_description
-import os
+from app.core.config import settings
+from app.llm.llm_factory import create_llm
 import base64
 import uuid
 from typing import Dict, List
+import os
 
 class InterviewService:
     def __init__(self, api_key: str):
@@ -13,28 +15,34 @@ class InterviewService:
         self.statistics: Dict[str, Dict[str, int]] = {}
 
     async def create_session(self, resume_base64: str, job_description: str, model: str) -> str:
+        if model not in settings.SUPPORTED_MODELS:
+            raise ValueError(f"Unsupported model: {model}")
+
         session_id = str(uuid.uuid4())
         
-        # Decode and save resume
+        # Decode resume
         resume_content = base64.b64decode(resume_base64).decode('utf-8')
-        resume_path = f"temp_resume_{session_id}.txt"
-        with open(resume_path, 'w') as f:
-            f.write(resume_content)
+        
+        # Parse resume and job description
+        parsed_resume = parse_resume(resume_content)
+        parsed_job_description = parse_job_description(job_description)
 
-        # Save job description
-        job_description_path = f"temp_jd_{session_id}.txt"
-        with open(job_description_path, 'w') as f:
-            f.write(job_description)
+        # Get model configuration
+        model_config = settings.SUPPORTED_MODELS[model]
+
+        # Create LLM
+        llm = create_llm(
+            name=model_config["name"],
+            api_key=getattr(settings, model_config["api_key"]),
+            api_url=getattr(settings, model_config["api_url"]),
+            temperature=model_config["temperature"]
+        )
 
         # Create agent
-        agent = SoftwareInterviewAgent(self.api_key, resume_path, job_description_path, model=model)
+        agent = SoftwareInterviewAgent(llm, parsed_resume, parsed_job_description)
         self.sessions[session_id] = agent
         self.transcripts[session_id] = []
         self.statistics[session_id] = {"total_tokens": 0, "input_tokens": 0, "output_tokens": 0}
-
-        # Clean up temporary files
-        os.remove(resume_path)
-        os.remove(job_description_path)
 
         return session_id
 
@@ -43,18 +51,19 @@ class InterviewService:
             raise ValueError("Invalid session ID")
 
         agent = self.sessions[session_id]
-        response = await agent.interview_chain.ainvoke(
-            {"input": "Start the interview with the introduction and small talk stage."},
-            config={"configurable": {"session_id": session_id}}
-        )
+        response = await agent.start_interview(session_id)
         
-        interviewer_content = agent.extract_interviewer_content(response)
-        stage = agent.extract_interview_stage(response)
+        self.transcripts[session_id].append({
+            "role": "assistant", 
+            "content": response["interviewer_content"], 
+            "stage": response["stage"]
+        })
+        self._update_statistics(session_id, response["token_usage"])
         
-        self.transcripts[session_id].append({"role": "assistant", "content": interviewer_content, "stage": stage})
-        self._update_statistics(session_id, len("Start the interview"), len(response))
-        
-        return {"message": {"role": "assistant", "content": interviewer_content}, "stage": stage}
+        return {
+            "message": {"role": "assistant", "content": response["interviewer_content"]}, 
+            "stage": response["stage"]
+        }
 
     async def process_candidate_message(self, session_id: str, message: str) -> Dict[str, str]:
         if session_id not in self.sessions:
@@ -63,37 +72,38 @@ class InterviewService:
         agent = self.sessions[session_id]
         self.transcripts[session_id].append({"role": "human", "content": message})
         
-        response = await agent.interview_chain.ainvoke(
-            {"input": f"The candidate's response: {message}\nContinue the interview based on the candidate's response."},
-            config={"configurable": {"session_id": session_id}}
-        )
+        response = await agent.process_candidate_message(session_id, message)
         
-        interviewer_content = agent.extract_interviewer_content(response)
-        stage = agent.extract_interview_stage(response)
+        self.transcripts[session_id].append({
+            "role": "assistant", 
+            "content": response["interviewer_content"], 
+            "stage": response["stage"]
+        })
+        self._update_statistics(session_id, response["token_usage"])
         
-        self.transcripts[session_id].append({"role": "assistant", "content": interviewer_content, "stage": stage})
-        self._update_statistics(session_id, len(message), len(response))
-        
-        return {"message": {"role": "assistant", "content": interviewer_content}, "stage": stage}
+        return {
+            "message": {"role": "assistant", "content": response["interviewer_content"]}, 
+            "stage": response["stage"]
+        }
 
     async def end_interview(self, session_id: str) -> Dict[str, str]:
         if session_id not in self.sessions:
             raise ValueError("Invalid session ID")
 
         agent = self.sessions[session_id]
-        response = await agent.interview_chain.ainvoke(
-            {"input": "Provide closing remarks and explain the next steps in the hiring process."},
-            config={"configurable": {"session_id": session_id}}
-        )
+        response = await agent.end_interview(session_id)
         
-        interviewer_content = agent.extract_interviewer_content(response)
-        self.transcripts[session_id].append({"role": "assistant", "content": interviewer_content, "stage": "closing"})
-        self._update_statistics(session_id, len("Provide closing remarks"), len(response))
+        self.transcripts[session_id].append({
+            "role": "assistant", 
+            "content": response["interviewer_content"], 
+            "stage": "closing"
+        })
+        self._update_statistics(session_id, response["token_usage"])
         
         stats = self.get_statistics(session_id)
         
         return {
-            "summary": interviewer_content,
+            "summary": response["interviewer_content"],
             "next_steps": "The interviewer will review your performance and get back to you soon.",
             "statistics": stats
         }
@@ -117,8 +127,8 @@ class InterviewService:
             "estimated_cost": (total_tokens / 1000) * 0.01  # Assuming $0.01 per 1k tokens
         }
 
-    def _update_statistics(self, session_id: str, input_length: int, output_length: int):
+    def _update_statistics(self, session_id: str, token_usage: Dict[str, int]):
         stats = self.statistics[session_id]
-        stats["input_tokens"] += input_length
-        stats["output_tokens"] += output_length
+        stats["input_tokens"] += token_usage["prompt_tokens"]
+        stats["output_tokens"] += token_usage["completion_tokens"]
         stats["total_tokens"] = stats["input_tokens"] + stats["output_tokens"]
