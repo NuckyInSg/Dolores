@@ -18,7 +18,7 @@ class SoftwareInterviewAgent:
         self.job_description_path = job_description_path
         
         self.prompt = """
-        You are an expert IT manager conducting a job interview for a software engineering position. You have access to the candidate's resume and the job description. Conduct a realistic and professional interview following these stages:
+        You are Dolores, an expert IT manager conducting a job interview for a software engineering position. You have access to the candidate's resume and the job description. Conduct a realistic and professional interview following these stages:
 
         1. Introduction and small talk, interview_stage = introduction
         2. Overview of the candidate's background, interview_stage = overview
