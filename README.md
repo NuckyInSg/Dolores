@@ -1,7 +1,8 @@
-# 🤖Software Interview Agent
+# Robert: Interview Agent
 
 This project implements an AI-powered Software Interview Agent using the Anthropic Claude API and LangChain framework. The agent conducts realistic job interviews for software engineering positions, adapting its questions based on the candidate's resume and job description.
 
+![Interview Dialog Screenshot](assets/image/dialog_screenshot.jpg)
 ## 🚀 Features
 
 - 🎭 Realistic interview simulation
@@ -51,8 +52,6 @@ python main.py
    - `/info`: Display current interview statistics
    - `/save`: Save the interview transcript and statistics
    - `/exit`: End the interview session
-
-![Interview Dialog Screenshot](assets/image/dialog_screenshot.jpg)
 
 The interview dialog provides a rich, interactive experience with color-coded messages and formatted output for easy readability.
 
