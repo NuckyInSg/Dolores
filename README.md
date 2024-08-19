@@ -1,4 +1,4 @@
-# Robert: Interview Agent
+# Dolores: Interview Agent
 
 This project implements an AI-powered Software Interview Agent using the Anthropic Claude API and LangChain framework. The agent conducts realistic job interviews for software engineering positions, adapting its questions based on the candidate's resume and job description.
 
