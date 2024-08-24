@@ -1,6 +1,14 @@
+fastapi
 langchain-anthropic
 langchain-core
+langchain-openai
 langchain
 langchain-community
 langchain-text-splitters
+jose
+python-jose
 pypdf
+pytest
+pydantic_settings
+tiktoken
+uvicorn
