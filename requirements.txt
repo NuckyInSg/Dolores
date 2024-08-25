@@ -4,3 +4,4 @@ langchain
 langchain-community
 langchain-text-splitters
 pypdf
+rich
