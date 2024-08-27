@@ -1,15 +1,15 @@
 from .base_agent import BaseAgent
-from langchain_core.language_models import BaseChatModel
+from app.llm.chat_llm import ChatLLM
 import re
 from typing import Dict, Any
 
 class SoftwareInterviewAgent(BaseAgent):
-    def __init__(self, llm: BaseChatModel, resume_content: str, job_description_content: str):
+    def __init__(self, llm: ChatLLM, resume_content: str, job_description_content: str):
         super().__init__(llm, resume_content, job_description_content)
 
     def get_prompt(self) -> str:
         return f"""
-        You are an expert IT manager conducting a job interview for a software engineering position. You have access to the candidate's resume and the job description. Conduct a realistic and professional interview following these stages:
+        You are Dolores, an expert IT manager conducting a job interview for a software engineering position. You have access to the candidate's resume and the job description. Conduct a realistic and professional interview following these stages:
 
         1. Introduction and small talk, interview_stage = introduction
         2. Overview of the candidate's background, interview_stage = overview

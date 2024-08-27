@@ -11,6 +11,8 @@ router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
+interview_service = InterviewService()
+
 class CreateInterviewRequest(BaseModel):
     resume: str  # base64 encoded resume file
     job_description: str
@@ -52,7 +54,6 @@ async def create_interview_session(
     current_user: str = Depends(get_current_user)
 ):
     try:
-        interview_service = InterviewService(api_key=settings.ANTHROPIC_API_KEY)
         session_id = await interview_service.create_session(request.resume, request.job_description, request.model)
         return {"session_id": session_id, "message": "Interview session created successfully"}
     except Exception as e:
@@ -64,7 +65,6 @@ async def start_interview(
     current_user: str = Depends(get_current_user)
 ):
     try:
-        interview_service = InterviewService(api_key=settings.ANTHROPIC_API_KEY)
         initial_message = await interview_service.start_interview(session_id)
         return initial_message
     except ValueError as e:
@@ -79,7 +79,6 @@ async def send_candidate_message(
     current_user: str = Depends(get_current_user)
 ):
     try:
-        interview_service = InterviewService(api_key=settings.ANTHROPIC_API_KEY)
         response = await interview_service.process_candidate_message(session_id, request.message)
         return response
     except ValueError as e:
@@ -93,7 +92,6 @@ async def end_interview(
     current_user: str = Depends(get_current_user)
 ):
     try:
-        interview_service = InterviewService(api_key=settings.ANTHROPIC_API_KEY)
         summary = await interview_service.end_interview(session_id)
         return summary
     except ValueError as e:
@@ -107,7 +105,6 @@ async def get_interview_transcript(
     current_user: str = Depends(get_current_user)
 ):
     try:
-        interview_service = InterviewService(api_key=settings.ANTHROPIC_API_KEY)
         transcript = await interview_service.get_transcript(session_id)
         return {"transcript": transcript}
     except ValueError as e:
@@ -121,8 +118,7 @@ async def get_interview_statistics(
     current_user: str = Depends(get_current_user)
 ):
     try:
-        interview_service = InterviewService(api_key=settings.ANTHROPIC_API_KEY)
-        statistics = await interview_service.get_statistics(session_id)
+        statistics = interview_service.get_statistics(session_id)
         return statistics
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
